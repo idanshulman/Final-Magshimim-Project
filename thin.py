@@ -12,7 +12,7 @@ lines = data.split("\n")
 for line in lines:
     line_data = line.split()
     if line_data != []:
-        if line_data[0] == "TCP" or line_data[0] == "UDP":
+        if (line_data[0] == "TCP" or line_data[0] == "UDP") and not line_data[LOCAL_DATA].startswith("["):
             # a connection indicator line
             local_addr, foreign_addr = line_data[LOCAL_DATA], line_data[FOREIGN_DATA]  # collect data
             local_ip, local_port = local_addr.split(":")  # get local data
