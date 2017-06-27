@@ -1,6 +1,7 @@
 import socket
 import sys
 import json
+import threading
 
 # GLOBALS
 PORT = 42  # the last port
@@ -43,14 +44,38 @@ def open_server():
     return listening_sock
 
 
+def print_packets(packets):
+    # this function prints packet list to the boss
+    for packet in packets:
+        print("IP: %s | Country: %s | Direction: %r | Port: %d | Size: %d" % (packet["ip"], packet["country"], packet["direction"], packet["port"], packet["size"]))
+
+
+def read_setting(settings_file):
+    # this function returns a dict of all computers connected and their ip
+    new_dict = {}  # an empty dict
+    data = settings_file.read()  # read all lines from the file
+    data = data.split("\n")
+    for line in data:
+        if line != "":
+            address, name = line.split(" : ")  # split data of eac line
+            new_dict[address] = name  # add data to the dict
+
+    return new_dict  # return value to calling function
+
+
 def main():
     # this is the main function
     setting_file = open_settings_file()  # now the file is opened and exist
+    computers = read_setting(setting_file)
     listening_sock = open_server()  # start listening as a server
+
     while True:
+        # get data and print it
         client_msg, client_addr = listening_sock.recvfrom(DATA_SIZE)  # get data from the
-        data = json.loads(client_msg.decode(encoding='UTF-8'))
-        print(data)
+        data = json.loads(client_msg.decode(encoding='UTF-8'))  # translate data using json
+        print("\nUser: ", computers[client_addr[0]])  # print the name
+        print_packets(data)  # print data
+
     return None
 
 main()  # call the main function

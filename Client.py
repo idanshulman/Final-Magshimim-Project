@@ -10,7 +10,7 @@ import copy
 GEO_IP_ADDR = "http://freegeoip.net"
 JSON_ADD = "/json/"
 MY_DATA = requests.get(url=str(GEO_IP_ADDR + JSON_ADD)).json()  # getting data from website with no params will be my ip
-SERVER_ADDR = 'localhost'
+SERVER_ADDR = '192.168.1.106'
 PORT = 42  # the last port
 
 # get my ip
@@ -111,5 +111,6 @@ def main():
         packets = sniff_packets(SNIFF_COUNT)  # get packets and add them to the PACKET_LIST global
         send_data = bytes(json.dumps(packets), encoding='UTF-8')
         sock.sendto(send_data, server_addr)  # send data
+        print("data sent")
 
 main()  # call the main function
