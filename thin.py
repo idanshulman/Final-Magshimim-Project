@@ -20,9 +20,9 @@ for line in lines:
             results.append((foreign_ip, foreign_port))
         elif line_data[0].startswith("["):
             # program indicator
-            program_data = line_data[0]
-            program_name = program_data[program_data.find("[") + 1:program_data.find("]")]
-            results.append(program_name)
+            program_data = line_data[0]  # find program name
+            program_name = program_data[program_data.find("[") + 1:program_data.find("]")]  # remove additional []
+            results.append(program_name)  # add it to the main list
 
 print(results)
 
@@ -38,3 +38,7 @@ for item in results:
         addresses = []
 
 print(total_data)
+# in total data - the key is tuple - (ip, port) and the value is the program used by this ip and port
+# the packet with the save ip and port will be the one which uses the program
+
+del results  # we do not need results any more
