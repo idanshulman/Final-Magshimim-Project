@@ -33,7 +33,8 @@ for item in results:
         addresses.append(item)
     else:
         program = item
-        total_data[addresses[0]] = program
+        for address in addresses:
+            total_data[address] = program
         addresses = []
 
 print(total_data)
