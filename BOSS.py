@@ -1,9 +1,11 @@
 import socket
 import sys
 import json
-import threading
+import time
 
 # GLOBALS
+TEMPLATE_PATH = r"C:\Users\magshimim\Documents\Magshimim's Work\Networking\HomeWork\Second Semester\Lesson 12\Project\template\template_edited.html"
+OUTPUT_PATH = r"C:\Users\magshimim\Documents\Magshimim's Work\Networking\HomeWork\Second Semester\Lesson 12\Project\HTML Files"
 PORT = 42  # the last port
 SETTINGS_FILE_NAME = "settings.dat"
 DATA_SIZE = 1024 * 20
@@ -21,6 +23,7 @@ counter = len(PATH) - 1
 IPS = {}  # all ips collected
 COUNTRIES = {}  # all countries  collected
 PORTS = {}  # all ports collected
+PROGRAMS = {}
 # incoming and outgoing dicts
 OUTGOING = {}
 INCOMING = {}
@@ -96,7 +99,11 @@ def process_data(data, user, blacklist_data):
         else:
             COUNTRIES[packet["country"]] = packet["size"]  # set as one on first appearance
 
-        # todo add program data
+        # add program data
+        if packet["program"] in PROGRAMS:
+            PROGRAMS[packet["program"]] += packet["size"]  # add one if existing
+        else:
+            PROGRAMS[packet["program"]] = packet["size"]
 
         # add ports data
         if packet["port"] in PORTS:
@@ -126,6 +133,39 @@ def process_data(data, user, blacklist_data):
 
 def write_html():
     # this function writes an html file according the template
+    template_file = open(TEMPLATE_PATH, "r")
+    template_file_data = template_file.read()  # read all data from the file
+    template_file.close()  # close the file
+    # Add INCOMING data
+    template_file_data = template_file_data.replace("%%incoming_labels%%", str(list(INCOMING.keys())))
+    template_file_data = template_file_data.replace("%%incoming_data%%", str(list(INCOMING.values())))
+    # Add OUTGOING data
+    template_file_data = template_file_data.replace("%%outgoing_labels%%", str(list(OUTGOING.keys())))
+    template_file_data = template_file_data.replace("%%outgoing_data%%", str(list(OUTGOING.values())))
+    # Add COUNTRIES data
+    template_file_data = template_file_data.replace("%%country_labels%%", str(list(COUNTRIES.keys())))
+    template_file_data = template_file_data.replace("%%country_data%%", str(list(COUNTRIES.values())))
+    # Add IPS data
+    template_file_data = template_file_data.replace("%%ip_labels%%", str(list(IPS.keys())))
+    template_file_data = template_file_data.replace("%%ip_data%%", str(list(IPS.values())))
+    # Add APPS data
+    template_file_data = template_file_data.replace("%%app_labels%%", str(list(PROGRAMS.keys())))
+    template_file_data = template_file_data.replace("%%app_data%%", str(list(PROGRAMS.values())))
+    # Add PORTS data
+    template_file_data = template_file_data.replace("%%port_labels%%", str(list(PORTS.keys())))
+    template_file_data = template_file_data.replace("%%port_data%%", str(list(PORTS.values())))
+
+    # Add ALERTS data
+    template_file_data = template_file_data.replace("%%alerts%%", str(ALERTS))
+
+    # FIND time data
+    update_time = time.strftime("%Y-%m-%d | %H:%M:%S")
+    template_file_data = template_file_data.replace("%%TIMESTAMP%%", str(update_time))
+
+    # now create a new file
+    new_html = open(OUTPUT_PATH + "\\report_file.html", "w")
+    new_html.write(template_file_data)
+    new_html.close()
     return None
 
 
@@ -143,8 +183,7 @@ def main():
         print("\nUser: ", user)  # print the name
         process_data(data, user, blacklist_sites)
         print_packets(data)  # print data
-
-        print("alerts: ", ALERTS)
+        write_html()
 
     return None
 

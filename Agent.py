@@ -24,7 +24,7 @@ s.close()  # close the socket
 INCOMING = False
 OUTGOING = True
 
-SNIFF_COUNT = 20
+SNIFF_COUNT = 100
 
 COUNTRIES = {}  # empty dict
 
