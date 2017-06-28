@@ -153,9 +153,8 @@ def main():
         client_msg, client_addr = listening_sock.recvfrom(DATA_SIZE)  # get data from the
         data = json.loads(client_msg.decode(encoding='UTF-8'))  # translate data using json
         user = computers[client_addr[0]]  # get user name
-        print("\nUser: ", user)  # print the name
-        process_data(data, user, blacklist_sites)
-        write_html()
+        process_data(data, user, blacklist_sites)  # process data
+        write_html()  # write data from  globals to file
 
     return None
 
