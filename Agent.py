@@ -6,6 +6,7 @@ import socket
 import json
 import copy
 import netstat_data  # for getting program data
+import threading  # for part 3 of the project
 
 # GLOBALS
 GEO_IP_ADDR = "http://freegeoip.net"
@@ -13,6 +14,9 @@ JSON_ADD = "/json/"
 MY_DATA = requests.get(url=str(GEO_IP_ADDR + JSON_ADD)).json()  # getting data from website with no params will be my ip
 SERVER_ADDR = '192.168.1.106'
 PORT = 42  # the last port
+
+server_addr = (SERVER_ADDR, PORT)  # create a server addr tuple
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # create a sock object
 
 # get my ip
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # connect socket
@@ -29,9 +33,70 @@ SNIFF_COUNT = 100
 COUNTRIES = {}  # empty dict
 
 
-def contain_tcp_udp_ip(packet):
+class SniffThread(threading.Thread):
+    def __init__(self, name_id, num_of_p):
+        threading.Thread.__init__(self)
+        self.name_id = name_id
+        self.packets_number = num_of_p
+        self.packets = None
+        self.count = 0
+
+    def sniff_packets(self):
+        # This is the function that sniffs and process data
+        self.packets = sniff(lfilter=packet_filter, count=self.packets_number)  # sniff one packet
+
+    def run(self):
+        while True:
+            self.sniff_packets()
+            print("new thread started")
+            th = ProcessThread(self.count, self.packets)
+            th.start()
+            self.count += 1
+
+
+class ProcessThread(threading.Thread):
+    def __init__(self, name_id, packets):
+        threading.Thread.__init__(self)
+        self.packets = packets
+        self.name_id = name_id
+        self.packet_data = {}
+        self.packet_list = []
+
+    def process_packets(self, packets):
+        netstat_program_data = netstat_data.collect_data()
+        for packet in packets:
+            self.packet_data["ip"] = get_ip(packet)  # get ip of packet
+            self.packet_data["country"] = get_country(packet)  # get country of a packet
+            self.packet_data["direction"] = transport_dir(packet)  # get direction of packet false is in, true is out
+            self.packet_data["port"] = get_port(packet, self.packet_data["direction"])  # get the port
+            self.packet_data["size"] = len(packet)  # get the len of a packet
+            try:
+                self.packet_data["program"] = netstat_program_data[(self.packet_data["ip"], self.packet_data["port"])]
+            except KeyError:
+                self.packet_data["program"] = "Unknown"
+
+            self.packet_list.append(copy.copy(self.packet_data))  # add the packet to the list
+
+        return self.packet_list
+
+    def send_message(self, processed_packets):
+        send_data = bytes(json.dumps(processed_packets), encoding='UTF-8')
+        sock.sendto(send_data, server_addr)  # send data
+        print("message sent")
+
+    def run(self):
+        processed_packets = self.process_packets(self.packets)
+        self.send_message(processed_packets)
+        print("thread closed")
+
+
+def packet_filter(packet):
     # this is the filter for packets with only ip and tcp or udp
-    return IP in packet and (TCP in packet or UDP in packet)
+    if IP in packet and (TCP in packet or UDP in packet):
+        if packet[IP].src != "104.31.11.172" and packet[IP].src != "104.31.10.172" and packet[IP].dst != "104.31.11.172" and packet[IP].dst != "104.31.10.172":
+            return True
+        else:
+            return False
 
 
 def get_country(packet):
@@ -88,35 +153,8 @@ def get_port(packet, direction):
     return port
 
 
-def sniff_packets(num_of_packets):
-    # This is the function that sniffs and process data
-    packet_data = {}
-    packet_list = []
-    packets = sniff(lfilter=contain_tcp_udp_ip, count=num_of_packets)  # sniff one packet
-    netstat_program_data = netstat_data.collect_data()
-    for packet in packets:
-        packet_data["ip"] = get_ip(packet)  # get ip of packet
-        packet_data["country"] = get_country(packet)  # get country of a packet
-        packet_data["direction"] = transport_dir(packet)  # get direction of packet false is in, true is out
-        packet_data["port"] = get_port(packet, packet_data["direction"])  # get the port
-        packet_data["size"] = len(packet)  # get the len of a packet
-        try:
-            packet_data["program"] = netstat_program_data[(packet_data["ip"], packet_data["port"])]
-        except KeyError:
-            packet_data["program"] = "Unknown"
-        packet_list.append(copy.copy(packet_data))  # add the packet to the list
-
-    return packet_list
-
-
 def main():
     # the main function
-    server_addr = (SERVER_ADDR, PORT)  # create a server addr tuple
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # create a sock object
-    while True:
-        packets = sniff_packets(SNIFF_COUNT)  # get packets and add them to the PACKET_LIST global
-        send_data = bytes(json.dumps(packets), encoding='UTF-8')
-        sock.sendto(send_data, server_addr)  # send data
-        print("data sent")
-
+    sniff_thread = SniffThread("sniff_thread", SNIFF_COUNT)
+    sniff_thread.start()
 main()  # call the main function
