@@ -48,7 +48,6 @@ class SniffThread(threading.Thread):
     def run(self):
         while True:
             self.sniff_packets()
-            print("new thread started")
             th = ProcessThread(self.count, self.packets)
             th.start()
             self.count += 1
@@ -82,12 +81,10 @@ class ProcessThread(threading.Thread):
     def send_message(self, processed_packets):
         send_data = bytes(json.dumps(processed_packets), encoding='UTF-8')
         sock.sendto(send_data, server_addr)  # send data
-        print("message sent")
 
     def run(self):
         processed_packets = self.process_packets(self.packets)
         self.send_message(processed_packets)
-        print("thread closed")
 
 
 def packet_filter(packet):
