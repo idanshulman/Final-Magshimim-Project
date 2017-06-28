@@ -24,6 +24,7 @@ PORTS = {}  # all ports collected
 # incoming and outgoing dicts
 OUTGOING = {}
 INCOMING = {}
+ALERTS = []
 
 # find the
 while counter > 1:
@@ -80,7 +81,7 @@ def read_setting(settings_file):
     return users_data, blacklist_data  # return value to calling function
 
 
-def process_data(data, user):
+def process_data(data, user, blacklist_data):
     # this function gets data from a user and adds it to the stats
     for packet in data:  # get all packets from the data collected
         # add ip data
@@ -117,7 +118,15 @@ def process_data(data, user):
             else:
                 OUTGOING[user] = packet["size"]
 
+        if packet["ip"] in blacklist_data and (user, packet["ip"]) not in ALERTS:  # if a blacklist site, add to alerts
+            ALERTS.append((user, packet["ip"]))  # add packet to alerts
+
     return None  # return None - all data saved in globals
+
+
+def write_html():
+    # this function writes an html file according the template
+    return None
 
 
 def main():
@@ -130,11 +139,12 @@ def main():
         # get data and print it
         client_msg, client_addr = listening_sock.recvfrom(DATA_SIZE)  # get data from the
         data = json.loads(client_msg.decode(encoding='UTF-8'))  # translate data using json
-        print("\nUser: ", computers[client_addr[0]])  # print the name
         user = computers[client_addr[0]]  # get user name
-        process_data(data, user)
+        print("\nUser: ", user)  # print the name
+        process_data(data, user, blacklist_sites)
         print_packets(data)  # print data
 
+        print("alerts: ", ALERTS)
 
     return None
 
