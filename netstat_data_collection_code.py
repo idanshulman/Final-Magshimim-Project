@@ -29,9 +29,9 @@ print(results)
 total_data = {}
 addresses = []
 for item in results:
-    if len(item) == 2:
+    if len(item) == 2 and type(item) is tuple:
         addresses.append(item)
-    else:
+    elif type(item) is str:
         program = item
         for address in addresses:
             total_data[address] = program
