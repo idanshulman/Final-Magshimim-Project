@@ -7,17 +7,14 @@ import time
 TEMPLATE_PATH = r"C:\Users\magshimim\Documents\Magshimim's Work\Networking\HomeWork\Second Semester\Lesson 12\Project\template\template_edited.html"
 OUTPUT_PATH = r"C:\Users\magshimim\Documents\Magshimim's Work\Networking\HomeWork\Second Semester\Lesson 12\Project\HTML Files"
 PORT = 42  # the last port
-SETTINGS_FILE_NAME = "settings.dat"
 DATA_SIZE = 1024 * 20
-PATH = sys.argv[0]
+SETTINGS_PATH = r"C:/Users/magshimim/Documents/Magshimim's Work/Networking/HomeWork/Second Semester/Lesson 12/Project/PyCharmProj/settings.dat"
 
 # get my ip for server use
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # connect socket
 s.connect(('8.8.8.8', 1))  # connect to the dns of google
 MY_IP = s.getsockname()[0]  # get my ip
 s.close()  # close the socket
-
-counter = len(PATH) - 1
 
 # stats globals
 IPS = {}  # all ips collected
@@ -29,24 +26,6 @@ OUTGOING = {}
 INCOMING = {}
 ALERTS = []
 
-# find the
-while counter > 1:
-    if PATH[counter] == '\\' or PATH[counter] == '/':
-        counter += 1
-        break
-    else:
-        counter -= 1
-
-PATH = PATH[0:counter]
-
-
-def open_settings_file():
-    try:
-        setting_file = open(PATH + SETTINGS_FILE_NAME, "r")  # try opening the file
-    except FileNotFoundError:
-        setting_file = open(PATH + SETTINGS_FILE_NAME, "a")  # create the file if not exist
-    return setting_file
-
 
 def open_server():
     # this function starts listening
@@ -56,11 +35,12 @@ def open_server():
     return listening_sock
 
 
-def read_setting(settings_file):
+def read_setting():
+    setting_file = open(SETTINGS_PATH, "r")  # try opening the file
     # this function returns a dict of all computers connected and their ip
     users_data = {}  # an empty dict for users
     blacklist_data = {}  # an empty dict for blacklist
-    data = settings_file.read()  # read all lines from the file
+    data = setting_file.read()  # read all lines from the file
     users, blacklist = data.split("blacklist:\n")
     blacklist = blacklist.split("\n")  # split the blacklist lines
     users = users.split("\n")  # split the users lines
@@ -165,8 +145,7 @@ def write_html():
 
 def main():
     # this is the main function
-    setting_file = open_settings_file()  # now the file is opened and exist
-    computers, blacklist_sites = read_setting(setting_file)  # get data from the file
+    computers, blacklist_sites = read_setting()  # get data from the file
     listening_sock = open_server()  # start listening as a server
 
     while True:
