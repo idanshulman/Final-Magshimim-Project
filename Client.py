@@ -5,6 +5,7 @@ from scapy.layers.inet import *
 import socket
 import json
 import copy
+import netstat_data  # for getting program data
 
 # GLOBALS
 GEO_IP_ADDR = "http://freegeoip.net"
@@ -92,12 +93,17 @@ def sniff_packets(num_of_packets):
     packet_data = {}
     packet_list = []
     packets = sniff(lfilter=contain_tcp_udp_ip, count=num_of_packets)  # sniff one packet
+    netstat_program_data = netstat_data.collect_data()
     for packet in packets:
         packet_data["ip"] = get_ip(packet)  # get ip of packet
         packet_data["country"] = get_country(packet)  # get country of a packet
         packet_data["direction"] = transport_dir(packet)  # get direction of packet false is in, true is out
         packet_data["port"] = get_port(packet, packet_data["direction"])  # get the port
         packet_data["size"] = len(packet)  # get the len of a packet
+        try:
+            packet_data["program"] = netstat_program_data[(packet_data["ip"], packet_data["port"])]
+        except KeyError:
+            packet_data["program"] = "Unknown"
         packet_list.append(copy.copy(packet_data))  # add the packet to the list
 
     return packet_list

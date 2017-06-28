@@ -55,7 +55,7 @@ def open_server():
 def print_packets(packets):
     # this function prints packet list to the boss
     for packet in packets:
-        print("IP: %s | Country: %s | Direction: %r | Port: %d | Size: %d" % (packet["ip"], packet["country"], packet["direction"], packet["port"], packet["size"]))
+        print("IP: %s | Country: %s | Direction: %r | Port: %d | Size: %d | Program: %s" % (packet["ip"], packet["country"], packet["direction"], packet["port"], packet["size"], packet["program"]))
 
 
 def read_setting(settings_file):
